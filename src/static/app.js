@@ -23,7 +23,10 @@ document.addEventListener("DOMContentLoaded", () => {
         // Crear lista de participantes
         const participantsList = details.participants.length
           ? `<ul class="participants-list">
-              ${details.participants.map(p => `<li>${p}</li>`).join("")}
+              ${details.participants.map(p => `<li style="list-style:none;display:flex;align-items:center;gap:6px;">
+                <span>${p}</span>
+                <span class="delete-participant" title="Eliminar" data-activity="${name}" data-email="${p}" style="cursor:pointer;color:#c62828;font-size:18px;user-select:none;">&#128465;</span>
+              </li>`).join("")}
             </ul>`
           : `<p class="no-participants">No hay participantes aún.</p>`;
 
@@ -72,6 +75,27 @@ document.addEventListener("DOMContentLoaded", () => {
         activityCard.appendChild(style);
 
         activitiesList.appendChild(activityCard);
+
+        // Delegación de eventos para eliminar participante
+        activityCard.addEventListener("click", async (e) => {
+          if (e.target.classList.contains("delete-participant")) {
+            const email = e.target.getAttribute("data-email");
+            const activity = e.target.getAttribute("data-activity");
+            if (confirm(`¿Eliminar a ${email} de ${activity}?`)) {
+              try {
+                const response = await fetch(`/activities/${encodeURIComponent(activity)}/unregister?email=${encodeURIComponent(email)}`, { method: "POST" });
+                const result = await response.json();
+                if (response.ok) {
+                  fetchActivities();
+                } else {
+                  alert(result.detail || "No se pudo eliminar el participante.");
+                }
+              } catch (err) {
+                alert("Error de red al eliminar participante.");
+              }
+            }
+          }
+        });
 
         // Add option to select dropdown
         const option = document.createElement("option");
